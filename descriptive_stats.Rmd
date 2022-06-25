@@ -1,0 +1,250 @@
+---
+title: "573 Summary Stats"
+author: "David Weaver"
+date: "18/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/GHG Emissions and Sinks")
+
+library(tidyverse)
+library(urbnmapr)
+library(stargazer)
+library(knitr)
+library(stringr)
+library(ggalt)
+library(xtable)
+library(openxlsx)
+library(tidycensus)
+```
+
+# ==============================================================
+# ==============================================================
+# ============ PART I - SUMMARY STATS FOR GHG DATA =============
+# ==============================================================
+# ==============================================================
+
+```{r}
+
+#===================================
+#===== STEP 1 - READ GHG CSV =======
+#===================================
+
+ghg = read.csv("mswch4panel_fips.csv")
+
+```
+
+
+```{r}
+
+#=========================================================
+#===== STEP 1 - NUM OF UNIQUE FACILITIES, COUNTIES  ======
+#=========================================================
+
+facilities_by_year = ghg %>% group_by(year) %>% count()
+
+counties_by_year = ghg %>% group_by(year) %>% summarise(n = length(unique(County)))
+
+summarystats1 = merge(facilities_by_year, counties_by_year, by="year")
+colnames(summarystats1) = c("year", "Facilities", "Unique Counties")
+summarystats1
+
+```
+
+```{r}
+#=============================================
+#===== STEP 2 - TOTAL ANNUAL EMISSIONS  ======
+#=============================================
+
+ghgsum = ghg %>% group_by(year) %>% summarise(Methane = sum(Methane..CH4..emissions, na.rm=TRUE))
+summarystats2 = merge(summarystats1, ghgsum, by="year")
+summarystats2
+```
+
+```{r}
+
+#========================================================================
+#===== STEP 3 - TOTAL ANNUAL EMISSIONS PLOT (BALANCED/UNBALANCED)  ======
+#========================================================================
+
+ghg_balanced = ghg %>% 
+  group_by(Facility.Id) %>%
+  mutate(cnt = n()) %>%
+  filter(cnt == 10)
+
+
+balanced_facilities = ghg_balanced %>% group_by(year) %>% count()
+n_balanced = unique(balanced_facilities$n)
+n_balanced
+balanced_methane = ghg_balanced %>% group_by(year) %>% summarise(Methane = sum(Methane..CH4..emissions, na.rm=TRUE))
+
+summarystats3 = merge(summarystats2, balanced_methane, by="year")
+
+colnames(summarystats3) = c("year", "Facilities", "Unique Counties", "MethaneUnbalanced", "MethaneBalanced")
+
+plot_frame = summarystats3
+
+methaneplot = ggplot(plot_frame) + 
+  geom_point(aes(x = year, y = MethaneUnbalanced, color="darkred"), size = 3) +
+  geom_xspline(data=plot_frame, aes(x=year, y= MethaneUnbalanced), color="darkred", spline_shape=0.4, size=0.4) + 
+  geom_point(aes(x=year,y=MethaneBalanced, color="blue"),size = 3) +
+    geom_xspline(data=plot_frame, aes(x=year, y= MethaneBalanced), color="blue", spline_shape=0.4, size=0.4) + 
+  scale_x_continuous(breaks = round(seq(min(plot_frame$year), max(plot_frame$year), by = 1),1)) +
+  labs(y = "Metric Tons of CH4 Emissions", x = "Year") +
+  theme(plot.title = element_text(hjust = 0.5, size=10)) +
+  scale_color_manual(labels = c("Balanced", "Unbalanced"), values = c("blue", "darkred")) +
+  labs(color = "Data:")
+
+methaneplot
+
+```
+
+```{r}
+
+#================================================
+#===== STEP 4 - EXPORT SUMMARY STAT TABLE  ======
+#================================================
+
+xtable(summarystats3)
+
+```
+
+```{r}
+
+#==================================================================
+#===== STEP 4 - PLOT AVG ANNUAL COUNTY LEVEL CH4 DATA ON MAP  =====
+#==================================================================
+
+urbn_ghg = ghg
+urbn_ghg2 = urbn_ghg %>% select(year,as.character(county_fips), Methane..CH4..emissions)
+
+
+counties_sf <- get_urbn_map(map = "counties", sf = TRUE)
+county_groups = urbn_ghg2 %>% group_by(county_fips) %>% summarise(mean = mean(Methane..CH4..emissions, na.rm= TRUE))
+
+emissions_data = left_join(counties_sf, county_groups, by="county_fips")
+
+emissions_data %>%
+  ggplot() +
+  geom_sf(mapping = aes(fill = mean),
+          color = "#ffffff", size = 0.03) +
+  labs(fill = "Average Annual CH4")
+
+```
+
+
+```{r}
+
+#==================================================================
+#===== STEP 4 - PERCENT OF POP COVERED BY GHG DATA  ===============
+#==================================================================
+
+
+pop10 <- get_decennial(year = 2010, geography="county", variables=c("P001001","H013001"))
+pop10 <- pop10 %>% rename(val = value) %>% 
+                    dcast(GEOID + NAME ~ variable) %>%
+                    rename(hh = H013001, pop = P001001, county_fips = GEOID)
+
+usa_population <- pop10 %>% filter(county_fips %in% counties_sf$county_fips) %>%
+                            summarise(pop = sum(pop))
+pop_covered <- pop10 %>% 
+  filter(county_fips %in% urbn_ghg2$county_fips) %>% 
+  summarise(pop = sum(pop))
+
+coverage_percent <- pop_covered/usa_population
+coverage_percent
+```
+
+
+# ==============================================================
+# ==============================================================
+# ============ PART II - SUMMARY STATS FOR COMPOST =============
+# ==============================================================
+# ==============================================================
+
+```{r}
+
+###########################
+### STEP 1 - COMPOSTING MAP
+###########################
+
+setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Compost Data")
+
+compost <- read.xlsx("biocycle_data2017clean.xlsx")
+
+compost_county <- compost %>% rename(county_fips = FIPS, cs=Households.with.Access.to.Curbside,
+                                     doff = Households.with.Access.to.Drop.Off) %>%
+                              group_by(county_fips) %>%
+                              mutate(county_fips = as.character(county_fips)) %>%
+                              summarize(cs = sum(cs,na.rm=T), cd = sum(doff,na.rm=T)) %>%
+                              mutate(total = rowSums(cbind(cs,cd),na.rm=T))
+
+compost_plot = left_join(counties_sf, compost_county, by="county_fips")
+
+compost_plot %>%
+  ggplot() +
+  geom_sf(mapping = aes(fill = total),
+          color = "#ffffff", size = 0.03) +
+  labs(fill = "County Households")
+compost_county
+```
+
+```{r}
+
+###########################
+### STEP 2 - SUMMARY STATS
+###########################
+
+# Number of Households Affected:
+
+comp_hh_cs <-  compost_county %>% summarise(sum(cs))
+comp_hh_cd <-  compost_county %>% summarise(sum(cd))
+
+# Number of counties with curbside and/or dropoff:
+
+comp_no_cnty <- compost_county %>% tally()
+
+curbside_no_cnty <- compost_county %>%
+                  filter(cs > 0) %>%
+                  tally() %>% 
+                  as.numeric()
+
+dropoff_no_cnty <- compost_county %>%
+                filter(cd > 0) %>%
+                tally() %>% 
+                as.numeric()
+
+# Amount of counties after GHG Merge:
+
+comp_to_ghg_total_cnty <- compost_county %>% filter(county_fips %in% unique(ghg$county_fips)) %>% tally()
+
+comp_to_ghg_curb_cnty <- compost_county %>%
+                  filter(cs > 0) %>% 
+                  filter(county_fips %in% unique(ghg$county_fips)) %>%
+                  tally()
+
+
+comp_to_ghg_drop_cnty <- compost_county %>%
+                  filter(cd > 0) %>% 
+                  filter(county_fips %in% unique(ghg$county_fips)) %>%
+                  tally()
+
+# Amount of Composting HH after GHG Merge:
+
+comp_to_ghg_curb_hh <- compost_county %>%
+                  filter(cs > 0) %>% 
+                  filter(county_fips %in% unique(ghg$county_fips)) %>%
+                  summarise(num = sum(cs))
+
+comp_to_ghg_curb_hh
+
+```
+
+
+
+
+
+
+

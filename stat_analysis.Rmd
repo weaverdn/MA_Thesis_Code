@@ -1,0 +1,65 @@
+---
+title: "573 Summary Stats"
+author: "David Weaver"
+date: "18/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/GHG Emissions and Sinks")
+
+library(tidyverse)
+library(urbnmapr)
+library(stargazer)
+library(knitr)
+library(stringr)
+library(ggalt)
+library(xtable)
+library(openxlsx)
+```
+
+# ==============================================================
+# ==============================================================
+# ============ PART I - SUMMARY STATS FOR GHG DATA =============
+# ==============================================================
+# ==============================================================
+
+
+```{r}
+
+# TODO - BINARY TREAT, TWFE CTS, EVENT STUDY, PER CAP MODEL, WLS/GLS, ?GMM?, HC, HAC, CLUSTERED, SERIAL CORREALTION HAC
+
+# Binning function for 
+bin_me = function(dataset, lowerbin, upperbin) {
+  dataset["t_bin"] = rep(0, nrow(dataset))
+  for (i in 1:nrow(dataset)) {
+    if (dataset["t"][i,] > upperbin) {dataset["t_bin"][i,] = upperbin}
+      else if (dataset["t"][i,] < lowerbin) {dataset["t_bin"][i,] = lowerbin}
+      else dataset["t_bin"][i,] = dataset["t"][i,]
+  }
+  return(dataset)
+}
+
+model = lm(ch4hh ~ curbside_hh + dropoff_hh + as.factor(county_fips) + as.factor(year), data=complete_bdataset_bfac)
+
+w = 1 / lm(abs(model$residuals) ~ model$fitted.values)$fitted.values^2
+summary(lm(ch4hh ~ curbside_hh + dropoff_hh + as.factor(county_fips) + as.factor(year), data=complete_bdataset_ufac), weights=(1/(model$fitted.values^2)))
+
+library(fixest)
+
+dataset$binary_treat = ifelse(dataset$cs_treatshare > 0, 1,0)
+
+twfe  = feols(ch4hh ~ (curbside_hh) + (dropoff_hh) + hh + as.factor(county_fips) + as.factor(year), data=dataset, cluster=c("county_fips"))
+
+summary(twfe)
+
+feols(ch4hh ~ binary_treat + do_treatshare | year + county_fips, data=dataset, cluster=c("county_fips"))
+
+
+```
+
+
+
+
+
