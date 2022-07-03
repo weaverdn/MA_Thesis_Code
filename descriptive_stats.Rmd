@@ -1,5 +1,5 @@
 ---
-title: "573 Summary Stats"
+title: "Landfill Statistics and Curbside Compost Statistics"
 author: "David Weaver"
 date: "18/04/2022"
 output: html_document
@@ -28,11 +28,11 @@ library(tidycensus)
 
 ```{r}
 
-#===================================
-#===== STEP 1 - READ GHG CSV =======
-#===================================
+#========================================
+#===== STEP 1 - READ GHG DATASETS =======
+#========================================
 
-ghg = read.csv("mswch4panel_fips.csv")
+ghg <-  read.csv("mswch4panel_fips.csv")
 
 ```
 
@@ -43,23 +43,16 @@ ghg = read.csv("mswch4panel_fips.csv")
 #===== STEP 1 - NUM OF UNIQUE FACILITIES, COUNTIES  ======
 #=========================================================
 
-facilities_by_year = ghg %>% group_by(year) %>% count()
+facilities_by_year <- ghg %>% group_by(year) %>% count()
 
-counties_by_year = ghg %>% group_by(year) %>% summarise(n = length(unique(County)))
+counties_by_year <- ghg %>% group_by(year) %>% summarise(n = length(unique(County)))
 
-summarystats1 = merge(facilities_by_year, counties_by_year, by="year")
+summarystats1 <-merge(facilities_by_year, counties_by_year, by="year")
 colnames(summarystats1) = c("year", "Facilities", "Unique Counties")
-summarystats1
 
-```
+ghgsum <-  ghg %>% group_by(year) %>% summarise(Methane = sum(Methane..CH4..emissions, na.rm=TRUE))
+summarystats2 <-  merge(summarystats1, ghgsum, by="year")
 
-```{r}
-#=============================================
-#===== STEP 2 - TOTAL ANNUAL EMISSIONS  ======
-#=============================================
-
-ghgsum = ghg %>% group_by(year) %>% summarise(Methane = sum(Methane..CH4..emissions, na.rm=TRUE))
-summarystats2 = merge(summarystats1, ghgsum, by="year")
 summarystats2
 ```
 
@@ -69,14 +62,14 @@ summarystats2
 #===== STEP 3 - TOTAL ANNUAL EMISSIONS PLOT (BALANCED/UNBALANCED)  ======
 #========================================================================
 
-ghg_balanced = ghg %>% 
+# Define a balanced facility as one from 2010-2017 continuously reporting values.
+ghg_balanced <-  ghg %>% 
   group_by(Facility.Id) %>%
   mutate(cnt = n()) %>%
   filter(cnt == 10)
 
-
-balanced_facilities = ghg_balanced %>% group_by(year) %>% count()
-n_balanced = unique(balanced_facilities$n)
+balanced_facilities <-  ghg_balanced %>% group_by(year) %>% count()
+n_balanced <-  unique(balanced_facilities$n)
 n_balanced
 balanced_methane = ghg_balanced %>% group_by(year) %>% summarise(Methane = sum(Methane..CH4..emissions, na.rm=TRUE))
 
@@ -241,6 +234,52 @@ comp_to_ghg_curb_hh <- compost_county %>%
 comp_to_ghg_curb_hh
 
 ```
+
+
+# ================================
+# ================================
+# PART III - Summary stats for final dataset
+# ================================
+# ================================
+
+```{r}
+
+########################
+# STEP 1 Read Datasets
+########################
+
+setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Final Datasets/All Counties")
+
+complete_udataset_ufac <- read.xlsx("ghg_cmp_upanel_ufac.xlsx")
+complete_udataset_bfac <- read.xlsx("ghg_cmp_upanel_bfac.xlsx")
+complete_bdataset_ufac <- read.xlsx("ghg_cmp_bpanel_ufac.xlsx")
+complete_bdataset_bfac <- read.xlsx("ghg_cmp_bpanel_bfac.xlsx")
+
+setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Final Datasets/Counties without NA Communities")
+
+dcomplete_udataset_ufac <- read.xlsx("dghg_cmp_upanel_ufac.xlsx")
+dcomplete_udataset_bfac <- read.xlsx("dghg_cmp_upanel_bfac.xlsx")
+dcomplete_bdataset_ufac <- read.xlsx("dghg_cmp_bpanel_ufac.xlsx")
+dcomplete_bdataset_bfac <- read.xlsx("dghg_cmp_bpanel_bfac.xlsx")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
