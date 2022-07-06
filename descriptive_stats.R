@@ -1,13 +1,3 @@
----
-title: "Landfill Statistics and Curbside Compost Statistics"
-author: "David Weaver"
-date: "18/04/2022"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
 library(tidyverse)
 library(urbnmapr)
 library(stargazer)
@@ -19,7 +9,7 @@ library(openxlsx)
 library(tidycensus)
 library(reshape2)
 library(RColorBrewer)
-```
+ 
 
 # ==================================================================
 # ==================================================================
@@ -27,7 +17,6 @@ library(RColorBrewer)
 # ==================================================================
 # ==================================================================
 
-```{r}
 
 #========================================
 #===== STEP 1 - READ GHG DATASETS =======
@@ -35,10 +24,6 @@ library(RColorBrewer)
 setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/GHG Emissions and Sinks")
 ghg <-  read.csv("mswch4panel_fips.csv")
 
-```
-
-
-```{r}
 
 #=========================================================
 #===== STEP 2 - NUM OF UNIQUE FACILITIES, COUNTIES  ======
@@ -55,10 +40,7 @@ ghgsum <-  ghg %>% group_by(year) %>% summarise(Methane = sum(Methane..CH4..emis
 summarystats2 <-  merge(summarystats1, ghgsum, by="year")
 
 summarystats2
-```
-
-```{r}
-
+ 
 #========================================================================
 #===== STEP 3 - TOTAL ANNUAL EMISSIONS PLOT (BALANCED/UNBALANCED)  ======
 #========================================================================
@@ -84,7 +66,7 @@ methaneplot = ggplot(plot_frame) +
   geom_point(aes(x = year, y = MethaneUnbalanced, color="darkred"), size = 3) +
   geom_xspline(data=plot_frame, aes(x=year, y= MethaneUnbalanced), color="darkred", spline_shape=0.4, size=0.4) + 
   geom_point(aes(x=year,y=MethaneBalanced, color="blue"),size = 3) +
-    geom_xspline(data=plot_frame, aes(x=year, y= MethaneBalanced), color="blue", spline_shape=0.4, size=0.4) + 
+  geom_xspline(data=plot_frame, aes(x=year, y= MethaneBalanced), color="blue", spline_shape=0.4, size=0.4) + 
   scale_x_continuous(breaks = round(seq(min(plot_frame$year), max(plot_frame$year), by = 1),1)) +
   labs(y = "Metric Tons of CH4 Emissions", x = "Year") +
   theme(plot.title = element_text(hjust = 0.5, size=10)) +
@@ -94,9 +76,9 @@ methaneplot = ggplot(plot_frame) +
 methaneplot
 plot_frame
 
-```
+ 
 
-```{r}
+  
 
 #================================================
 #===== STEP 4 - EXPORT SUMMARY STAT TABLE  ======
@@ -105,9 +87,9 @@ plot_frame
 # Balanced v Unbalanced
 xtable(summarystats3)
 summarystats3
-```
+ 
 
-```{r}
+  
 
 #==================================================================
 #===== STEP 4 - PLOT AVG ANNUAL COUNTY LEVEL CH4 DATA ON MAP  =====
@@ -130,10 +112,10 @@ emissions_data %>%
           color = "#ffffff", size = 0.03) +
   labs(fill = "Average Annual CH4")
 
-```
+ 
 
 
-```{r}
+  
 
 #==================================================================
 #===== STEP 4 - PERCENT OF POP COVERED BY GHG DATA  ===============
@@ -141,11 +123,11 @@ emissions_data %>%
 
 pop10 <- get_decennial(year = 2010, geography="county", variables=c("P001001","H013001"))
 pop10 <- pop10 %>% rename(val = value) %>% 
-                    dcast(GEOID + NAME ~ variable) %>%
-                    rename(hh = H013001, pop = P001001, county_fips = GEOID)
+  dcast(GEOID + NAME ~ variable) %>%
+  rename(hh = H013001, pop = P001001, county_fips = GEOID)
 
 usa_population <- pop10 %>% filter(county_fips %in% counties_sf$county_fips) %>%
-                            summarise(pop = sum(pop))
+  summarise(pop = sum(pop))
 pop_covered <- pop10 %>% 
   filter(county_fips %in% urbn_ghg2$county_fips) %>% 
   summarise(pop = sum(pop))
@@ -153,7 +135,7 @@ pop_covered <- pop10 %>%
 coverage_percent <- pop_covered/usa_population
 coverage_percent
 
-```
+ 
 
 
 # ==============================================================
@@ -162,7 +144,7 @@ coverage_percent
 # ==============================================================
 # ==============================================================
 
-```{r}
+  
 
 ###########################
 ### STEP 1 - BIOCYCLE MAP
@@ -174,10 +156,10 @@ compost <- read.xlsx("biocycle_data2017clean.xlsx")
 
 compost_county <- compost %>% rename(county_fips = FIPS, cs=hh_cs_county,
                                      doff = hh_do_county) %>%
-                              group_by(county_fips) %>%
-                              mutate(county_fips = as.character(county_fips)) %>%
-                              summarize(cs = sum(cs,na.rm=T), cd = sum(doff,na.rm=T)) %>%
-                              mutate(total = rowSums(cbind(cs,cd),na.rm=T))
+  group_by(county_fips) %>%
+  mutate(county_fips = as.character(county_fips)) %>%
+  summarize(cs = sum(cs,na.rm=T), cd = sum(doff,na.rm=T)) %>%
+  mutate(total = rowSums(cbind(cs,cd),na.rm=T))
 
 compost_plot = left_join(counties_sf, compost_county, by="county_fips")
 
@@ -187,9 +169,9 @@ compost_plot %>%
           color = "#ffffff", size = 0.03) +
   labs(fill = "County Households")
 
-```
+ 
 
-```{r}
+  
 
 ###########################
 ### STEP 2 - SUMMARY STATS
@@ -205,40 +187,40 @@ comp_hh_cd <-  compost_county %>% summarise(sum(cd))
 comp_no_cnty <- compost_county %>% tally()
 
 curbside_no_cnty <- compost_county %>%
-                  filter(cs > 0) %>%
-                  tally() %>% 
-                  as.numeric()
+  filter(cs > 0) %>%
+  tally() %>% 
+  as.numeric()
 
 dropoff_no_cnty <- compost_county %>%
-                filter(cd > 0) %>%
-                tally() %>% 
-                as.numeric()
+  filter(cd > 0) %>%
+  tally() %>% 
+  as.numeric()
 
 # Amount of counties after GHG Merge:
 
 comp_to_ghg_total_cnty <- compost_county %>% filter(county_fips %in% unique(ghg$county_fips)) %>% tally()
 
 comp_to_ghg_curb_cnty <- compost_county %>%
-                  filter(cs > 0) %>% 
-                  filter(county_fips %in% unique(ghg$county_fips)) %>%
-                  tally()
+  filter(cs > 0) %>% 
+  filter(county_fips %in% unique(ghg$county_fips)) %>%
+  tally()
 
 
 comp_to_ghg_drop_cnty <- compost_county %>%
-                  filter(cd > 0) %>% 
-                  filter(county_fips %in% unique(ghg$county_fips)) %>%
-                  tally()
+  filter(cd > 0) %>% 
+  filter(county_fips %in% unique(ghg$county_fips)) %>%
+  tally()
 
 # Amount of Composting HH after GHG Merge:
 
 comp_to_ghg_curb_hh <- compost_county %>%
-                  filter(cs > 0) %>% 
-                  filter(county_fips %in% unique(ghg$county_fips)) %>%
-                  summarise(num = sum(cs))
+  filter(cs > 0) %>% 
+  filter(county_fips %in% unique(ghg$county_fips)) %>%
+  summarise(num = sum(cs))
 
 comp_to_ghg_curb_hh
 
-```
+ 
 
 # =================================================
 # =================================================
@@ -247,25 +229,25 @@ comp_to_ghg_curb_hh
 # =================================================
 
 There are six final datasets for analysis:
-
-#### (1) Unbalanced Baseline: (unbalanced facilities and counties)
-
-Removed the following:
-(A) GHG facility-year (observation) that:
-- Report Zero Emissions in a year (consider it an unbalanced facility)
+  
+  #### (1) Unbalanced Baseline: (unbalanced facilities and counties)
+  
+  Removed the following:
+  (A) GHG facility-year (observation) that:
+  - Report Zero Emissions in a year (consider it an unbalanced facility)
 (B) Composting communities that:
-- Remove communities with unknown treatment year(s).
+  - Remove communities with unknown treatment year(s).
 - Remove communities with unknown FIPS (ex. Waste Areas, unable to locate using city-fips lookup).
 
 #### (2) Balanced Counties, Unbalanced Facilities:
 
 Removed the following: 
-- Any county that does not have reporting for all 8 years of the data (2010-2017).
+  - Any county that does not have reporting for all 8 years of the data (2010-2017).
 
 #### (3) Balanced Baseline: (balanced facilities and implied counties)
 
 Removed the following:
-- Any facility that does not have reporting for all 8 years of the data (2010-2017).
+  - Any facility that does not have reporting for all 8 years of the data (2010-2017).
 - By extension, this implies counties are also balanced.
 
 #### (4) NA Adjusted Unbalanced Counties and Facilities:
@@ -276,37 +258,37 @@ Removed the following:
 
 
 Summary Statistics for each dataset I want:
-
-(1) Observational:
-- Observations, Unique Counties, Unique Landfills, Unique Communities
+  
+  (1) Observational:
+  - Observations, Unique Counties, Unique Landfills, Unique Communities
 - Number of HH treated with CS and DO.
 
 (2) Plot:
-- Plot and table of total GHG per year.
+  - Plot and table of total GHG per year.
 
 (3) Histogram:
-- Histogram of CS treatment.
+  - Histogram of CS treatment.
 
 (4) Maps:
-- Counties in Each dataset?
-
-
-###### APPROACH TO CALCULATING OBSERVATIONAL STATISTICS:
-
-(1) # of counties, GHG, Observations, and HH affected are all very simple
+  - Counties in Each dataset?
+  
+  
+  ###### APPROACH TO CALCULATING OBSERVATIONAL STATISTICS:
+  
+  (1) # of counties, GHG, Observations, and HH affected are all very simple
 
 (2) # of communities:
 
 Single value for number of unique communities in the dataset 
 Steps:
-- List of county FIPS in the entire final dataset being analyzed
- -Drop any community from clean community level that is in a FIPS not in the final dataset 
+  - List of county FIPS in the entire final dataset being analyzed
+-Drop any community from clean community level that is in a FIPS not in the final dataset 
 - Drop WSAs and Boulder 
 - Drop no start date communities 
 - Tally() 
 
 
-```{r}
+  
 
 ##############################
 #### STEP 1 Read Datasets ####
@@ -335,10 +317,10 @@ scomplete_bdataset_ufac <- read.xlsx("dghg_cmp_bpanel_ufac.xlsx")
 scomplete_bdataset_bfac <- read.xlsx("dghg_cmp_bpanel_bfac.xlsx")
 
 
-```
+ 
 
 
-```{r}
+  
 
 #########################################
 #### STEP 2 OBSERVATIONAL STATISTICS ####
@@ -415,9 +397,9 @@ setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Compost Data")
 compost_ <- read.xlsx("biocycle_data2017clean.xlsx")
 unsafe_cnty <- compost_ %>% filter(is.na(Start.Date) == T) %>% select(FIPS) %>% unique()
 compost <- compost_ %>% 
-                    drop_na(Start.Date, FIPS) %>% # These observations aren't used in any datasets.
-                    rename(Region = `State/City/County/Waste.District`) %>% # Neither are these
-                    filter(Region != "Boulder County (11)1") # Multiple treatments in observation. Dropped.
+  drop_na(Start.Date, FIPS) %>% # These observations aren't used in any datasets.
+  rename(Region = `State/City/County/Waste.District`) %>% # Neither are these
+  filter(Region != "Boulder County (11)1") # Multiple treatments in observation. Dropped.
 
 # Unbalanced
 uu_cmp <- compost %>% filter(FIPS %in% uu_fips) %>% tally()
@@ -444,85 +426,85 @@ sbb_cmp <- compost %>% filter(FIPS %in% sbb_fips) %>% tally()
 
 # Unbalanced facility and county:
 uusummary <- complete_udataset_ufac %>% group_by(year) %>% 
-            summarise(Observations = n(), 
-                      Counties = n_distinct(county_fips),
-                      CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
-                      DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
-                      CH4 = sum(ch4,na.rm=T)) %>%
-            add_row(year = "Total:", Observations = sum(.$Observations),
-                    Counties = n_distinct(complete_udataset_ufac$county_fips),
-                    CurbsideHHCumulative = max(.$CurbsideHHCumulative),
-                    DropOffHHCumulative =  max(.$DropOffHHCumulative),
-                    CH4 = sum(.$CH4)) %>%
-            left_join(uu_facnum, by = "year") %>%
-            add_row(year =paste("Unique Communities: ",uu_cmp))
+  summarise(Observations = n(), 
+            Counties = n_distinct(county_fips),
+            CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
+            DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
+            CH4 = sum(ch4,na.rm=T)) %>%
+  add_row(year = "Total:", Observations = sum(.$Observations),
+          Counties = n_distinct(complete_udataset_ufac$county_fips),
+          CurbsideHHCumulative = max(.$CurbsideHHCumulative),
+          DropOffHHCumulative =  max(.$DropOffHHCumulative),
+          CH4 = sum(.$CH4)) %>%
+  left_join(uu_facnum, by = "year") %>%
+  add_row(year =paste("Unique Communities: ",uu_cmp))
 
 # Unbalanced facility and Balanced county:
 busummary <- complete_bdataset_ufac %>% group_by(year) %>% 
-            summarise(Observations = n(), 
-                      CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
-                      DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
-                      CH4 = sum(ch4,na.rm=T)) %>%
-            add_row(year = "Total:", Observations = sum(.$Observations),
-                    CurbsideHHCumulative = max(.$CurbsideHHCumulative),
-                    DropOffHHCumulative =  max(.$DropOffHHCumulative),
-                    CH4 = sum(.$CH4)) %>%
-            left_join(bu_facnum, by = "year") %>%
-            add_row(year =paste("Unique Communities: ", bu_cmp))
+  summarise(Observations = n(), 
+            CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
+            DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
+            CH4 = sum(ch4,na.rm=T)) %>%
+  add_row(year = "Total:", Observations = sum(.$Observations),
+          CurbsideHHCumulative = max(.$CurbsideHHCumulative),
+          DropOffHHCumulative =  max(.$DropOffHHCumulative),
+          CH4 = sum(.$CH4)) %>%
+  left_join(bu_facnum, by = "year") %>%
+  add_row(year =paste("Unique Communities: ", bu_cmp))
 
 
 # Balanced Facility and County:
 bbsummary <- complete_bdataset_bfac %>% group_by(year) %>% 
-            summarise(Observations = n(), 
-                      CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
-                      DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
-                      CH4 = sum(ch4,na.rm=T)) %>%
-            add_row(year = "Total:", Observations = sum(.$Observations),
-                    CurbsideHHCumulative = max(.$CurbsideHHCumulative),
-                    DropOffHHCumulative =  max(.$DropOffHHCumulative),
-                    CH4 = sum(.$CH4)) %>%
-            left_join(bb_facnum, by = "year") %>%
-            add_row(year =paste("Unique Communities: ", bb_cmp))
+  summarise(Observations = n(), 
+            CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
+            DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
+            CH4 = sum(ch4,na.rm=T)) %>%
+  add_row(year = "Total:", Observations = sum(.$Observations),
+          CurbsideHHCumulative = max(.$CurbsideHHCumulative),
+          DropOffHHCumulative =  max(.$DropOffHHCumulative),
+          CH4 = sum(.$CH4)) %>%
+  left_join(bb_facnum, by = "year") %>%
+  add_row(year =paste("Unique Communities: ", bb_cmp))
 
 # "Safe" Unbalanced facility and county:
 suusummary <- scomplete_udataset_ufac %>% group_by(year) %>% 
-            summarise(Observations = n(), 
-                      CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
-                      DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
-                      CH4 = sum(ch4,na.rm=T)) %>%
-            add_row(year = "Total:", Observations = sum(.$Observations),
-                    CurbsideHHCumulative = max(.$CurbsideHHCumulative),
-                    DropOffHHCumulative =  max(.$DropOffHHCumulative),
-                    CH4 = sum(.$CH4)) %>%
-            left_join(suu_facnum, by = "year") %>%
-            add_row(year =paste("Unique Communities: ", suu_cmp))
+  summarise(Observations = n(), 
+            CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
+            DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
+            CH4 = sum(ch4,na.rm=T)) %>%
+  add_row(year = "Total:", Observations = sum(.$Observations),
+          CurbsideHHCumulative = max(.$CurbsideHHCumulative),
+          DropOffHHCumulative =  max(.$DropOffHHCumulative),
+          CH4 = sum(.$CH4)) %>%
+  left_join(suu_facnum, by = "year") %>%
+  add_row(year =paste("Unique Communities: ", suu_cmp))
 
 
 # "Safe" Unbalanced facility and Balanced County
 sbusummary <- scomplete_bdataset_ufac %>% group_by(year) %>% 
-            summarise(Observations = n(), 
-                      CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
-                      DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
-                      CH4 = sum(ch4,na.rm=T)) %>%
-            add_row(year = "Total:", Observations = sum(.$Observations),
-                    CurbsideHHCumulative = max(.$CurbsideHHCumulative),
-                    DropOffHHCumulative =  max(.$DropOffHHCumulative),
-                    CH4 = sum(.$CH4)) %>%
-            left_join(sbu_facnum, by = "year") %>%
-            add_row(year =paste("Unique Communities: ", sbu_cmp))
+  summarise(Observations = n(), 
+            CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
+            DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
+            CH4 = sum(ch4,na.rm=T)) %>%
+  add_row(year = "Total:", Observations = sum(.$Observations),
+          CurbsideHHCumulative = max(.$CurbsideHHCumulative),
+          DropOffHHCumulative =  max(.$DropOffHHCumulative),
+          CH4 = sum(.$CH4)) %>%
+  left_join(sbu_facnum, by = "year") %>%
+  add_row(year =paste("Unique Communities: ", sbu_cmp))
 
 # "Safe" Balanced facility and County
 sbbsummary <- scomplete_bdataset_bfac %>% group_by(year) %>% 
-            summarise(Observations = n(), 
-                      CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
-                      DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
-                      CH4 = sum(ch4,na.rm=T)) %>%
-            add_row(year = "Total:", Observations = sum(.$Observations),
-                    CurbsideHHCumulative = max(.$CurbsideHHCumulative),
-                    DropOffHHCumulative =  max(.$DropOffHHCumulative),
-                    CH4 = sum(.$CH4)) %>%
-            left_join(sbb_facnum, by = "year") %>%
-            add_row(year =paste("Unique Communities: ", sbb_cmp))
+  summarise(Observations = n(), 
+            CurbsideHHCumulative = sum(curbside_hh,na.rm=T),
+            DropOffHHCumulative = sum(dropoff_hh,na.rm=T),
+            CH4 = sum(ch4,na.rm=T)) %>%
+  add_row(year = "Total:", Observations = sum(.$Observations),
+          CurbsideHHCumulative = max(.$CurbsideHHCumulative),
+          DropOffHHCumulative =  max(.$DropOffHHCumulative),
+          CH4 = sum(.$CH4)) %>%
+  left_join(sbb_facnum, by = "year") %>%
+  add_row(year =paste("Unique Communities: ", sbb_cmp))
 uusummary
 busummary
 bbsummary
@@ -530,9 +512,9 @@ suusummary
 sbusummary
 sbbsummary
 
-```
+ 
 
-```{r}
+  
 
 ####################################
 #### STEP 3 GHG PLOT BY DATASET ####
@@ -540,22 +522,22 @@ sbbsummary
 
 # Get methane data
 plotframe <- data.frame(cbind(uusummary$year,
-uusummary$CH4,
-busummary$CH4,
-bbsummary$CH4,
-suusummary$CH4,
-sbusummary$CH4,
-sbbsummary$CH4))
+                              uusummary$CH4,
+                              busummary$CH4,
+                              bbsummary$CH4,
+                              suusummary$CH4,
+                              sbusummary$CH4,
+                              sbbsummary$CH4))
 colnames(plotframe) = c("year","UU", "BU", "BB", "SUU", "SBU", "SBB")
 
 plotframe <- plotframe[1:8,] %>% 
   mutate(year = as.numeric(as.character(year)),
-        UU = as.numeric(as.character(UU)),
-        BU = as.numeric(as.character(BU)),
-        BB = as.numeric(as.character(BB)),
-        SUU = as.numeric(as.character(SUU)),
-        SBU = as.numeric(as.character(SBU)),
-        SBB = as.numeric(as.character(SBB)))
+         UU = as.numeric(as.character(UU)),
+         BU = as.numeric(as.character(BU)),
+         BB = as.numeric(as.character(BB)),
+         SUU = as.numeric(as.character(SUU)),
+         SBU = as.numeric(as.character(SBU)),
+         SBB = as.numeric(as.character(SBB)))
 
 # Graph it:
 methaneplot2 <-  ggplot(plotframe) + 
@@ -571,9 +553,9 @@ methaneplot2 <-  ggplot(plotframe) +
   scale_color_manual(name = "Datasets", values = c("UU"= "#1B9E77", "BU" = "#D95F02","BB" = "#7570B3", "SUU" = "#E7298A", "SBU" = "#66A61E", "SBB" = "#E6AB02")) +
   theme(plot.title = element_text(hjust = 0.5, size=10)) + labs(color = "Data:")
 show(methaneplot2)
-```
+ 
 
-```{r}
+  
 ##############################################
 #### STEP 4 CS SHARE HISTOGRAM BY DATASET ####
 ##############################################
@@ -602,11 +584,11 @@ scomplete_bdataset_bfac %>% filter(cs_treatshare > 0) %>% ggplot(aes(x = cs_trea
   geom_histogram(color="black", binwidth = 0.1,  fill="#E6AB02") +
   labs(y = "Frequency", x = "Treated Observation Share of HH with Curbside Composting")  +
   ylim(0,80)
-```
+ 
 
 
 
-```{r}
+  
 
 ##############################################
 #### STEP 4 CS NEW HH TREATMENT BY YEAR ######
@@ -626,11 +608,11 @@ SBBcs <- scomplete_bdataset_bfac %>% group_by(year) %>%
   summarise(SBB = sum(new_hhcs,na.rm=T))
 
 plotframe3 <- UUcs %>% left_join(BUcs, by="year") %>%
-                       left_join(BBcs, by="year") %>%
-                       left_join(SUUcs, by="year") %>%
-                       left_join(SBUcs, by="year") %>%  
-                       left_join(SBBcs, by="year") %>%
-                       mutate(year = as.double(year))
+  left_join(BBcs, by="year") %>%
+  left_join(SUUcs, by="year") %>%
+  left_join(SBUcs, by="year") %>%  
+  left_join(SBBcs, by="year") %>%
+  mutate(year = as.double(year))
 plotframe3
 treatyear <-  ggplot(plotframe3) + 
   geom_line(aes(x=year,y=UU, color="UU")) +
@@ -646,7 +628,7 @@ treatyear <-  ggplot(plotframe3) +
   theme(plot.title = element_text(hjust = 0.5, size=10)) + labs(color = "Data:")
 
 show(treatyear)
-```
+ 
 
 
 

@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = "/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/GHG Emissions and Sinks")
+knitr::opts_knit$set(root.dir = "/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Final Datasets")
 
 library(tidyverse)
 library(urbnmapr)
@@ -17,6 +17,7 @@ library(stringr)
 library(ggalt)
 library(xtable)
 library(openxlsx)
+library(did)
 ```
 
 # ==============================================================
@@ -24,6 +25,14 @@ library(openxlsx)
 # ============ PART I - SUMMARY STATS FOR GHG DATA =============
 # ==============================================================
 # ==============================================================
+
+
+```{r}
+
+
+
+```
+
 
 
 ```{r}
