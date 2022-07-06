@@ -1,4 +1,3 @@
-
 library(tidyverse)
 library(plm)
 library(knitr)
@@ -31,7 +30,7 @@ Mode <- function(x) {
 # ==============================================================
 # ==============================================================
 
-   
+  
 
 ############################################################
 #### Step 1 - Create Unbalanced Panel of MSW GHG Data ######
@@ -102,7 +101,7 @@ ghgclean <- ghg
  
 
 
-   
+  
 
 ############################################################
 #### Step 2 - Geolocate MSW Waste Facilities by County #####
@@ -143,7 +142,7 @@ holderdf = data.frame(holder)
 
  
 
-   
+  
 
 ############################################################
 #### Step 3 - Merge GHG Data with FIPS, Save Output    #####
@@ -165,7 +164,7 @@ holderdf = data.frame(holder)
 # ==============================================================
 # ==============================================================
 
-   
+  
 
 ############################################################
 #### Step 1 - LOAD LANDFILL CHARACTERISTICS AND COUNTS  ####
@@ -186,7 +185,7 @@ holderdf = data.frame(holder)
 # ==============================================================
 # ==============================================================
 
-   
+  
 setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Compost Data")
 
 ############################################################
@@ -199,7 +198,7 @@ setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Compost Data")
  
 
 
-   
+  
 ############################################################
 ########### STEP 2 - MANUALLY CLEAN SPACING:  ##############
 ############################################################
@@ -208,7 +207,7 @@ setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Compost Data")
  
 
 
-   
+  
 
 ############################################################
 ########### STEP 3 - ADD TREATMENT START DATES :  ##########
@@ -261,7 +260,7 @@ biocycle <- biocycle %>% mutate(hh_cs_community = ifelse(is.na(hh_cs_community),
  
 
 
-   
+  
 
 ############################################################
 ########### STEP 4 - ADD FIPS TO COMMUNITIES :  ############
@@ -289,14 +288,16 @@ write.xlsx(biocycle_fips,"biocycle_data2017clean.xlsx")
 # ==============================================================
 # ==============================================================
 
-   
+  
 ################################################################
 ##### Step 1 - Census Data 2010 - Population & HHs #############
 ################################################################
 
 # Read Census Household and Population Data, ready for merge.
 pop10lookup <- load_variables(2010 ,"pl")
-pop10 <- get_decennial(year = 2010, geography="county", variables=c("P001001","H013001"))
+pop10 <- get_decennial(year = 2010, geography="county", 
+                       variables=c("P001001","H013001"))
+
 pop10 <- pop10 %>% rename(val = value) %>% 
   dcast(GEOID + NAME ~ variable) %>%
   rename(hh = H013001, pop = P001001, county_fips = GEOID)
@@ -429,7 +430,7 @@ write.xlsx(acs, "acs_counties.xlsx")
  
 
 
-   
+  
 ################################################################
 ##### Step 3 - ELECTION Data 2010-2017 - County % Democrat #####
 ################################################################
@@ -472,7 +473,7 @@ write.xlsx(elections, "countyvote_clean.xlsx")
 # =====================================================================
 # =====================================================================
 
-   
+  
 
 ##############################################################################
 ##### STEP 1 - Aggregate  GHG data to County-Year Level + ready for merge  ###
@@ -484,7 +485,8 @@ ghg_to_merge <-  read.csv("mswch4panel_fips.csv")
 
 # Get Unbalanced and Balanced Facilities: Define Balanced as Facility with GHG for 2010-2017.
 
-ghg_to_merge_balanced <- ghg_to_merge %>% 
+ghg_to_merge_balanced <- ghg_to_merge %>%
+  filter(Total.reported.direct.emissions !=0) %>% # remove zero
   filter(year %in% c(2010:2017)) %>% 
   group_by(Facility.Id) %>% 
   mutate(cnt = n()) %>% filter(cnt == 8) %>% select(-c(cnt))
@@ -496,16 +498,32 @@ ghg_to_merge_unbalanced <- ghg_to_merge %>% filter(year %in% c(2010:2017))
 ##############################################################################################
 
 # Investigate the error:
-fipserror_facs <- ghg_to_merge %>% group_by(Facility.Id) %>% mutate(cnt = length(unique(county_fips))) %>% 
-  filter(cnt >=2) %>% select(year, Facility.Name, Facility.Id, Latitude, Longitude, county_fips)
+fipserror_facs <- ghg_to_merge %>% group_by(Facility.Id) %>% 
+  mutate(cnt = length(unique(county_fips))) %>% 
+  filter(cnt >=2) %>% 
+  select(year, Facility.Name, Facility.Id, Latitude, Longitude, county_fips)
 
 # The Error here is caused by Longitude/Latitude Rounding.
 # 2010 Facilities can sometimes differ in county because of rounding errors versus 2011-2019.
 # I assume that the location hasn't actually changed, and that the 2010 county SHOULD be the 2011-2019 county.
 # By this rule, I apply the majority county to the 2010 rounding error values.
-ghg_to_merge_balanced <- ghg_to_merge_balanced %>% group_by(Facility.Id) %>% mutate(county_fips = Mode(county_fips))
 
-ghg_to_merge_unbalanced <- ghg_to_merge_unbalanced %>% group_by(Facility.Id) %>% mutate(county_fips = Mode(county_fips))
+# While I'm at it, I eliminate facility-years that report 0 emissions. it is either an error, or operations have yet to start.
+ghg_to_merge_balanced <- ghg_to_merge_balanced %>%
+  group_by(Facility.Id) %>% 
+  mutate(county_fips = Mode(county_fips))
+
+ghg_to_merge_unbalanced <- ghg_to_merge_unbalanced %>% 
+  filter(Total.reported.direct.emissions !=0) %>% # Remove zero facilities.
+  group_by(Facility.Id) %>% 
+  mutate(county_fips = Mode(county_fips))
+
+facility_level_balanced <- ghg_to_merge_balanced
+facility_level_unbalanced <- ghg_to_merge_unbalanced
+
+setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/GHG Emissions and Sinks/Facility Community Level")
+write.xlsx(facility_level_balanced, "facility_level_balanced.xlsx")
+write.xlsx(facility_level_unbalanced, "facility_level_unbalanced.xlsx")
 
 ##############################################
 ### ASIDE FINISHED. CONTINUE MAIN ASSEMBLY ###
@@ -531,7 +549,7 @@ ghg_to_merge_unbalanced <- ghg_to_merge_unbalanced %>%
             ch4 = sum(Methane..CH4..emissions,na.rm=T))
  
 
-   
+  
 
 ####################################################
 ##### STEP 3 - CREATE PANEL FOR COUNTY GHG #########
@@ -559,7 +577,7 @@ write.xlsx(ghg_panel_unbfac_drop, "countyCH4_unbalancedfac_balcnty.xlsx") # unba
 write.xlsx(ghg_panel_bfac,"countyCH4_balancedfac.xlsx") # balanced facility and county
  
 
-   
+  
 
 #################################################################################
 ##### STEP 3 - Aggregate Compost data to County-Year Level + ready for merge  ###
@@ -594,8 +612,6 @@ cmp_ <- cmp_ %>%
   filter(FIPS != "08013") %>% # Boulder and others in county
   filter(is.na(CS.Start.Date) == F,
          is.na(DO.Start.Date) == F) # eliminate if missing start (NA not None)
-
-
 
 # Aggregate compost data to county level.
 cmp_county <- cmp_ %>%
@@ -640,7 +656,7 @@ treatment_rollout <- left_join(treatyears,hhtreat,by = "county_fips")
 
  
 
-   
+  
 
 ########################################################
 ##### STEP 4 - CREATE PANEL FOR COUNTY COMPOST #########
@@ -693,7 +709,7 @@ write.xlsx(cmp_panel,"compost_county_panel.xlsx")
 # ===============================================================
 # ===============================================================
 
-   
+  
 
 ##################################################
 ##### STEP 1 - IMPORT COUNTY-LEVEL DATA  #########
@@ -709,7 +725,7 @@ setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/GHG Emissions and Sink
 # Read data but ignore observations with 0 values for CH4 (before operation)
 ghg_unbfac_unbcnty <- read.xlsx("countyCH4_unbalancedfac.xlsx") %>% filter(ch4 != 0)
 ghg_bfac <- read.xlsx("countyCH4_balancedfac.xlsx") %>% filter(ch4 != 0)
-ghg_unbfac_bcnty <- read.xlsx("countyCH4_unbalancedfac_balcnty.xlsx") %>% filter(ch4 !=0)
+ghg_unbfac_bcnty <- read.xlsx("countyCH4_unbalancedfac_balcnty.xlsx") %>% filter(ch4 != 0)
 
 # Read Census Data:
 setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Census")
@@ -726,7 +742,7 @@ elect <- read.xlsx("countyvote_clean.xlsx") %>%
  
 
 
-   
+  
 ##################################################
 ####### STEP 2 - MERGE WITH GHG AS BASE  #########
 ##################################################
@@ -770,7 +786,7 @@ complete_bdataset_bfac <- ghg_bfac %>%
  
 
 
-   
+  
 
 ##################################################
 ####### STEP 3 - EXPORT DATASET VARIANTS  ########
