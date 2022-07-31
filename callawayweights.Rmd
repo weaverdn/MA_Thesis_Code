@@ -1,0 +1,930 @@
+---
+title: "Untitled"
+author: "David Weaver"
+date: "28/07/2022"
+output: html_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Final Datasets")
+
+library(tidyverse)
+library(urbnmapr)
+library(stargazer)
+library(knitr)
+library(stringr)
+library(xtable)
+library(openxlsx)
+library(did)
+library(fixest)
+library(bacondecomp)
+library(DIDmultiplegt)
+library(haven)
+
+# helper functions:
+```
+
+# ========================================================= ======
+# =================================================================
+# =============== EXTRA - SANTANNA CALLAWAY WEIGHTS  =============== 
+# ========================================================= =======
+# ========================================================= =======
+
+
+# ========================= DATASET 1 UU ==============================
+
+```{r}
+
+# METHOD 1 - NO CONTROLS
+
+# Calculate Average Treatment Effect for each Group in each time period.
+uu_attgt1 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~1,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated" # Compares versus both never and not yet treated.
+              )
+
+# Aggregate ATE for each time-to-treat group with dynamic effects
+uu_ate_s1 <- aggte(uu_attgt1, type = "simple") # weighted average of all group-time average treatment effects with weights proportional to the group size
+uu_ate_d1 <- aggte(uu_attgt1, type = "dynamic") # averages the average treatment effects across all lengths of exposure to the treatment.
+uu_ate_g1 <- aggte(uu_attgt1, type = "group") # 
+
+# Note that the event study will not have a "reference" period because the Callway weighting averages 
+
+# METHOD 2 - POP
+
+uu_attgt2 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+uu_ate_s2 <- aggte(uu_attgt2, type = "simple")
+uu_ate_d2 <- aggte(uu_attgt2, type = "dynamic")
+uu_ate_g2 <- aggte(uu_attgt2, type = "group")
+
+# METHOD 3 - POP + RenterFraction
+
+uu_attgt3 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+uu_ate_s3 <- aggte(uu_attgt3, type = "simple")
+uu_ate_d3 <- aggte(uu_attgt3, type = "dynamic")
+uu_ate_g3 <- aggte(uu_attgt3, type = "group")
+
+# METHOD 4 - POP + RenterFraction + Facilities
+
+uu_attgt4 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+uu_ate_s4 <- aggte(uu_attgt4, type = "simple")
+uu_ate_d4 <- aggte(uu_attgt4, type = "dynamic")
+uu_ate_g4 <- aggte(uu_attgt4, type = "group")
+
+
+# METHOD 5 - POP + RenterFraction + Facilities + AvgHHSize
+
+uu_attgt5 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+uu_ate_s5 <- aggte(uu_attgt5, type = "simple")
+uu_ate_d5 <- aggte(uu_attgt5, type = "dynamic")
+uu_ate_g5 <- aggte(uu_attgt5, type = "group")
+summary(uu_ate_s5)
+
+# METHOD 6 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome
+
+uu_attgt6 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize + MedianIncome,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+uu_ate_s6 <- aggte(uu_attgt6, type = "simple")
+uu_ate_d6 <- aggte(uu_attgt6, type = "dynamic")
+uu_ate_g <- aggte(uu_attgt6, type = "group")
+summary(uu_ate_s6)
+
+# METHOD 7 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome + Demshare
+uu_attgt7 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ facnum + AvgHHSize + MedianIncome + Population + RenterFraction + demshare,
+              data = complete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+uu_ate_s7 <- aggte(uu_attgt7, type = "simple")
+uu_ate_d7 <- aggte(uu_attgt7, type = "dynamic")
+uu_ate_g7 <- aggte(uu_attgt7, type = "group")
+
+ggdid(uu_ate_d7)
+ggdid(uu_ate_g7)
+summary(uu_ate_d7)
+summary(uu_ate_s7)
+
+
+```
+
+# ========================= DATASET 2 BU ==============================
+
+```{r}
+
+# METHOD 1 - NO CONTROLS
+
+# Calculate Average Treatment Effect for each Group in each time period.
+bu_attgt1 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~1,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated" # Compares versus both never and not yet treated.
+              )
+
+# Aggregate ATE for each time-to-treat group with dynamic effects
+bu_ate_s1 <- aggte(bu_attgt1, type = "simple") # weighted average of all group-time average treatment effects with weights proportional to the group size
+bu_ate_d1 <- aggte(bu_attgt1, type = "dynamic") # averages the average treatment effects across all lengths of exposure to the treatment.
+bu_ate_g1 <- aggte(bu_attgt1, type = "group") # 
+
+# Note that the event study will not have a "reference" period because the Callway weighting averages 
+
+# METHOD 2 - POP
+
+bu_attgt2 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bu_ate_s2 <- aggte(bu_attgt2, type = "simple")
+bu_ate_d2 <- aggte(bu_attgt2, type = "dynamic")
+bu_ate_g2 <- aggte(bu_attgt2, type = "group")
+
+# METHOD 3 - POP + RenterFraction
+
+bu_attgt3 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bu_ate_s3 <- aggte(bu_attgt3, type = "simple")
+bu_ate_d3 <- aggte(bu_attgt3, type = "dynamic")
+bu_ate_g3 <- aggte(bu_attgt3, type = "group")
+
+# METHOD 4 - POP + RenterFraction + Facilities
+
+bu_attgt4 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bu_ate_s4 <- aggte(bu_attgt4, type = "simple")
+bu_ate_d4 <- aggte(bu_attgt4, type = "dynamic")
+bu_ate_g4 <- aggte(bu_attgt4, type = "group")
+
+
+# METHOD 5 - POP + RenterFraction + Facilities + AvgHHSize
+
+bu_attgt5 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bu_ate_s5 <- aggte(bu_attgt5, type = "simple")
+bu_ate_d5 <- aggte(bu_attgt5, type = "dynamic")
+bu_ate_g5 <- aggte(bu_attgt5, type = "group")
+
+# METHOD 6 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome
+
+bu_attgt6 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize + MedianIncome,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bu_ate_s6 <- aggte(bu_attgt6, type = "simple")
+bu_ate_d6 <- aggte(bu_attgt6, type = "dynamic")
+bu_ate_g <- aggte(bu_attgt6, type = "group")
+
+# METHOD 7 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome + Demshare
+bu_attgt7 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ facnum + AvgHHSize + MedianIncome + Population + RenterFraction + demshare,
+              data = complete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bu_ate_s7 <- aggte(bu_attgt7, type = "simple")
+bu_ate_d7 <- aggte(bu_attgt7, type = "dynamic")
+bu_ate_g7 <- aggte(bu_attgt7, type = "group")
+
+ggdid(bu_ate_d7)
+ggdid(bu_ate_g7)
+summary(bu_ate_d7)
+summary(bu_ate_s7)
+
+```
+
+# ========================= DATASET 3 BB ==============================
+
+```{r}
+
+# METHOD 1 - NO CONTROLS
+
+# Calculate Average Treatment Effect for each Group in each time period.
+bb_attgt1 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~1,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated" # Compares versus both never and not yet treated.
+              )
+
+# Aggregate ATE for each time-to-treat group with dynamic effects
+bb_ate_s1 <- aggte(bb_attgt1, type = "simple") # weighted average of all group-time average treatment effects with weights proportional to the group size
+bb_ate_d1 <- aggte(bb_attgt1, type = "dynamic") # averages the average treatment effects across all lengths of exposure to the treatment.
+bb_ate_g1 <- aggte(bb_attgt1, type = "group") # 
+
+# Note that the event study will not have a "reference" period because the Callway weighting averages 
+
+# METHOD 2 - POP
+
+bb_attgt2 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bb_ate_s2 <- aggte(bb_attgt2, type = "simple")
+bb_ate_d2 <- aggte(bb_attgt2, type = "dynamic")
+bb_ate_g2 <- aggte(bb_attgt2, type = "group")
+
+# METHOD 3 - POP + RenterFraction
+
+bb_attgt3 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bb_ate_s3 <- aggte(bb_attgt3, type = "simple")
+bb_ate_d3 <- aggte(bb_attgt3, type = "dynamic")
+bb_ate_g3 <- aggte(bb_attgt3, type = "group")
+
+# METHOD 4 - POP + RenterFraction + Facilities
+
+bb_attgt4 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bb_ate_s4 <- aggte(bb_attgt4, type = "simple")
+bb_ate_d4 <- aggte(bb_attgt4, type = "dynamic")
+bb_ate_g4 <- aggte(bb_attgt4, type = "group")
+
+
+# METHOD 5 - POP + RenterFraction + Facilities + AvgHHSize
+
+bb_attgt5 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bb_ate_s5 <- aggte(bb_attgt5, type = "simple")
+bb_ate_d5 <- aggte(bb_attgt5, type = "dynamic")
+bb_ate_g5 <- aggte(bb_attgt5, type = "group")
+
+# METHOD 6 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome
+
+bb_attgt6 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize + MedianIncome,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bb_ate_s6 <- aggte(bb_attgt6, type = "simple")
+bb_ate_d6 <- aggte(bb_attgt6, type = "dynamic")
+bb_ate_g <- aggte(bb_attgt6, type = "group")
+
+# METHOD 7 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome + Demshare
+bb_attgt7 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ facnum + AvgHHSize + MedianIncome + Population + RenterFraction + demshare,
+              data = complete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+bb_ate_s7 <- aggte(bb_attgt7, type = "simple")
+bb_ate_d7 <- aggte(bb_attgt7, type = "dynamic")
+bb_ate_g7 <- aggte(bb_attgt7, type = "group")
+
+ggdid(bb_ate_d7)
+ggdid(bb_ate_g7)
+summary(bb_ate_d7)
+summary(bb_ate_s7)
+
+```
+
+
+# ========================= DATASET 4 SUU ==============================
+
+```{r}
+
+# METHOD 1 - NO CONTROLS
+
+# Calculate Average Treatment Effect for each Group in each time period.
+suu_attgt1 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~1,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated" # Compares versus both never and not yet treated.
+              )
+
+# Aggregate ATE for each time-to-treat group with dynamic effects
+suu_ate_s1 <- aggte(suu_attgt1, type = "simple") # weighted average of all group-time average treatment effects with weights proportional to the group size
+suu_ate_d1 <- aggte(suu_attgt1, type = "dynamic") # averages the average treatment effects across all lengths of exposure to the treatment.
+suu_ate_g1 <- aggte(suu_attgt1, type = "group") # 
+
+# Note that the event study will not have a "reference" period because the Callway weighting averages 
+
+# METHOD 2 - POP
+
+suu_attgt2 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+suu_ate_s2 <- aggte(suu_attgt2, type = "simple")
+suu_ate_d2 <- aggte(suu_attgt2, type = "dynamic")
+suu_ate_g2 <- aggte(suu_attgt2, type = "group")
+
+# METHOD 3 - POP + RenterFraction
+
+suu_attgt3 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+suu_ate_s3 <- aggte(suu_attgt3, type = "simple")
+suu_ate_d3 <- aggte(suu_attgt3, type = "dynamic")
+suu_ate_g3 <- aggte(suu_attgt3, type = "group")
+
+# METHOD 4 - POP + RenterFraction + Facilities
+
+suu_attgt4 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+suu_ate_s4 <- aggte(suu_attgt4, type = "simple")
+suu_ate_d4 <- aggte(suu_attgt4, type = "dynamic")
+suu_ate_g4 <- aggte(suu_attgt4, type = "group")
+
+
+# METHOD 5 - POP + RenterFraction + Facilities + AvgHHSize
+
+suu_attgt5 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+suu_ate_s5 <- aggte(suu_attgt5, type = "simple")
+suu_ate_d5 <- aggte(suu_attgt5, type = "dynamic")
+suu_ate_g5 <- aggte(suu_attgt5, type = "group")
+
+# METHOD 6 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome
+
+suu_attgt6 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize + MedianIncome,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+suu_ate_s6 <- aggte(suu_attgt6, type = "simple")
+suu_ate_d6 <- aggte(suu_attgt6, type = "dynamic")
+suu_ate_g <- aggte(suu_attgt6, type = "group")
+
+# METHOD 7 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome + Demshare
+suu_attgt7 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ facnum + AvgHHSize + MedianIncome + Population + RenterFraction + demshare,
+              data = scomplete_udataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+suu_ate_s7 <- aggte(suu_attgt7, type = "simple")
+suu_ate_d7 <- aggte(suu_attgt7, type = "dynamic")
+suu_ate_g7 <- aggte(suu_attgt7, type = "group")
+
+summary(suu_attgt7)
+ggdid(suu_ate_d7)
+ggdid(suu_ate_g7)
+summary(suu_ate_d7)
+summary(suu_ate_s7)
+
+```
+
+# ========================= DATASET 5 SBU ==============================
+
+```{r}
+
+# METHOD 1 - NO CONTROLS
+
+# Calculate Average Treatment Effect for each Group in each time period.
+sbu_attgt1 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~1,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated" # Compares versus both never and not yet treated.
+              )
+
+# Aggregate ATE for each time-to-treat group with dynamic effects
+sbu_ate_s1 <- aggte(sbu_attgt1, type = "simple") # weighted average of all group-time average treatment effects with weights proportional to the group size
+sbu_ate_d1 <- aggte(sbu_attgt1, type = "dynamic") # averages the average treatment effects across all lengths of exposure to the treatment.
+sbu_ate_g1 <- aggte(sbu_attgt1, type = "group") # 
+
+# Note that the event study will not have a "reference" period because the Callway weighting averages 
+
+# METHOD 2 - POP
+
+sbu_attgt2 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbu_ate_s2 <- aggte(sbu_attgt2, type = "simple")
+sbu_ate_d2 <- aggte(sbu_attgt2, type = "dynamic")
+sbu_ate_g2 <- aggte(sbu_attgt2, type = "group")
+
+# METHOD 3 - POP + RenterFraction
+
+sbu_attgt3 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbu_ate_s3 <- aggte(sbu_attgt3, type = "simple")
+sbu_ate_d3 <- aggte(sbu_attgt3, type = "dynamic")
+sbu_ate_g3 <- aggte(sbu_attgt3, type = "group")
+
+# METHOD 4 - POP + RenterFraction + Facilities
+
+sbu_attgt4 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbu_ate_s4 <- aggte(sbu_attgt4, type = "simple")
+sbu_ate_d4 <- aggte(sbu_attgt4, type = "dynamic")
+sbu_ate_g4 <- aggte(sbu_attgt4, type = "group")
+
+
+# METHOD 5 - POP + RenterFraction + Facilities + AvgHHSize
+
+sbu_attgt5 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbu_ate_s5 <- aggte(sbu_attgt5, type = "simple")
+sbu_ate_d5 <- aggte(sbu_attgt5, type = "dynamic")
+sbu_ate_g5 <- aggte(sbu_attgt5, type = "group")
+
+# METHOD 6 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome
+
+sbu_attgt6 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize + MedianIncome,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbu_ate_s6 <- aggte(sbu_attgt6, type = "simple")
+sbu_ate_d6 <- aggte(sbu_attgt6, type = "dynamic")
+sbu_ate_g <- aggte(sbu_attgt6, type = "group")
+
+# METHOD 7 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome + Demshare
+sbu_attgt7 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ facnum + AvgHHSize + MedianIncome + Population + RenterFraction + demshare,
+              data = scomplete_bdataset_ufac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbu_ate_s7 <- aggte(sbu_attgt7, type = "simple")
+sbu_ate_d7 <- aggte(sbu_attgt7, type = "dynamic")
+sbu_ate_g7 <- aggte(sbu_attgt7, type = "group")
+
+ggdid(sbu_ate_d7,xlim=c(-5,5))
+ggdid(sbu_ate_g7)
+summary(sbu_ate_d7)
+summary(sbu_ate_s7)
+
+```
+
+# ========================= DATASET 6 SBB ==============================
+
+```{r}
+# METHOD 1 - NO CONTROLS
+
+# Calculate Average Treatment Effect for each Group in each time period.
+sbb_attgt1 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~1,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated" # Compares versus both never and not yet treated.
+              )
+
+# Aggregate ATE for each time-to-treat group with dynamic effects
+sbb_ate_s1 <- aggte(sbb_attgt1, type = "simple") # weighted average of all group-time average treatment effects with weights proportional to the group size
+sbb_ate_d1 <- aggte(sbb_attgt1, type = "dynamic") # averages the average treatment effects across all lengths of exposure to the treatment.
+sbb_ate_g1 <- aggte(sbb_attgt1, type = "group") # 
+
+# Note that the event study will not have a "reference" period because the Callway weighting averages 
+
+# METHOD 2 - POP
+
+sbb_attgt2 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbb_ate_s2 <- aggte(sbb_attgt2, type = "simple")
+sbb_ate_d2 <- aggte(sbb_attgt2, type = "dynamic")
+sbb_ate_g2 <- aggte(sbb_attgt2, type = "group")
+
+# METHOD 3 - POP + RenterFraction
+
+sbb_attgt3 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbb_ate_s3 <- aggte(sbb_attgt3, type = "simple")
+sbb_ate_d3 <- aggte(sbb_attgt3, type = "dynamic")
+sbb_ate_g3 <- aggte(sbb_attgt3, type = "group")
+
+# METHOD 4 - POP + RenterFraction + Facilities
+
+sbb_attgt4 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbb_ate_s4 <- aggte(sbb_attgt4, type = "simple")
+sbb_ate_d4 <- aggte(sbb_attgt4, type = "dynamic")
+sbb_ate_g4 <- aggte(sbb_attgt4, type = "group")
+
+
+# METHOD 5 - POP + RenterFraction + Facilities + AvgHHSize
+
+sbb_attgt5 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbb_ate_s5 <- aggte(sbb_attgt5, type = "simple")
+sbb_ate_d5 <- aggte(sbb_attgt5, type = "dynamic")
+sbb_ate_g5 <- aggte(sbb_attgt5, type = "group")
+
+# METHOD 6 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome
+
+sbb_attgt6 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ Population + RenterFraction + facnum + AvgHHSize + MedianIncome,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbb_ate_s6 <- aggte(sbb_attgt6, type = "simple")
+sbb_ate_d6 <- aggte(sbb_attgt6, type = "dynamic")
+sbb_ate_g <- aggte(sbb_attgt6, type = "group")
+
+# METHOD 7 - POP + RenterFraction + Facilities + AvgHHSize + MedianIncome + Demshare
+sbb_attgt7 <- att_gt(yname= "ch4hh",
+              gname = "cs_firsttreat",
+              idname = "county_fips",
+              tname = "year",
+              allow_unbalanced_panel = T,
+              xformla = ~ facnum + AvgHHSize + MedianIncome + Population + RenterFraction + demshare,
+              data = scomplete_bdataset_bfac,
+              est_method = "reg",
+              clustervars = "county_fips",
+              bstrap = T,
+              control_group = "notyettreated"
+              )
+
+sbb_ate_s7 <- aggte(sbb_attgt7, type = "simple")
+sbb_ate_d7 <- aggte(sbb_attgt7, type = "dynamic")
+sbb_ate_g7 <- aggte(sbb_attgt7, type = "group")
+
+ggdid(sbb_ate_d7)
+ggdid(sbb_ate_g7)
+summary(sbb_ate_d7)
+summary(sbb_ate_s7)
+
+
+
+```

@@ -1,14 +1,3 @@
----
-title: "573 Summary Stats"
-author: "David Weaver"
-date: "18/04/2022"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = "/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Final Datasets")
 
 library(tidyverse)
 library(urbnmapr)
@@ -34,34 +23,34 @@ bin_me = function(dataset, lowerbin, upperbin, treatment) {
   dataset["t_bin"] = rep(0, nrow(dataset))
   
   if (treatment == "cs") {
-  for (i in 1:nrow(dataset)) {
-    if (is.na(dataset["timetotreat_cs"][i,])) {dataset["t_bin"][i,] = NA}
-    else {
-           if (dataset["timetotreat_cs"][i,] > upperbin) {dataset["t_bin"][i,] = upperbin}
-           else if (dataset["timetotreat_cs"][i,] < lowerbin) {dataset["t_bin"][i,] = lowerbin}
-           else dataset["t_bin"][i,] = dataset["timetotreat_cs"][i,]
+    for (i in 1:nrow(dataset)) {
+      if (is.na(dataset["timetotreat_cs"][i,])) {dataset["t_bin"][i,] = NA}
+      else {
+        if (dataset["timetotreat_cs"][i,] > upperbin) {dataset["t_bin"][i,] = upperbin}
+        else if (dataset["timetotreat_cs"][i,] < lowerbin) {dataset["t_bin"][i,] = lowerbin}
+        else dataset["t_bin"][i,] = dataset["timetotreat_cs"][i,]
+      }
     }
-  }
-  return(dataset)
+    return(dataset)
   }
   
   if (treatment == "do") {
-  for (i in 1:nrow(dataset)) {
-    if (is.na(dataset["timetotreat_do"][i,])) {dataset["t_bin"][i,] = NA}
-    else {
-          if (dataset["timetotreat_do"][i,] > upperbin) {dataset["t_bin"][i,] = upperbin}
-          else if (dataset["timetotreat_do"][i,] < lowerbin) {dataset["t_bin"][i,] = lowerbin}
-          else dataset["t_bin"][i,] = dataset["timetotreat_do"][i,]
+    for (i in 1:nrow(dataset)) {
+      if (is.na(dataset["timetotreat_do"][i,])) {dataset["t_bin"][i,] = NA}
+      else {
+        if (dataset["timetotreat_do"][i,] > upperbin) {dataset["t_bin"][i,] = upperbin}
+        else if (dataset["timetotreat_do"][i,] < lowerbin) {dataset["t_bin"][i,] = lowerbin}
+        else dataset["t_bin"][i,] = dataset["timetotreat_do"][i,]
+      }
     }
-  }
-  return(dataset)
+    return(dataset)
   }
 }
 
 
-```
+ 
 
-```{r}
+  
 
 ##############################
 ## STEP 1 - IMPORT DATASETS ##
@@ -103,10 +92,10 @@ scomplete_bdataset_bfac <- read.xlsx("sghg_cmp_bpanel_bfac.xlsx") %>%
          cs_firsttreat = as.numeric(cs_firsttreat),
          do_firsttreat = as.numeric(do_firsttreat))
 
-```
+ 
 
 
-```{r}
+  
 
 ###########################
 ### Clean Datasets - 
@@ -148,7 +137,7 @@ scomplete_bdataset_bfac <- scomplete_bdataset_bfac %>%
          county_fips = as.numeric(county_fips)) %>% 
   mutate(ch4pop = ch4/Population)
 
-```
+ 
 
 
 # ============================================================
@@ -158,7 +147,7 @@ scomplete_bdataset_bfac <- scomplete_bdataset_bfac %>%
 # ============================================================ 
 
 
-```{r}
+  
 
 # ALL REG OUTPUT DONE IN STATA - DID_MULTIPLEGT PACKAGE
 
@@ -293,7 +282,7 @@ SBBb5.dta <- read_dta("BBb5.dta") %>% mutate(Dataset = "SBBb5") %>% rowwise() %>
 SBBb6.dta <- read_dta("BBb6.dta") %>% mutate(Dataset = "SBBb6") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
 SBBb7.dta <- read_dta("BBb7.dta") %>% mutate(Dataset = "SBBb7") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
 SBBb8.dta <- read_dta("BBb8.dta") %>% mutate(Dataset = "SBBb8") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
- 
+
 #Continuous
 SBBc1.dta <- read_dta("SBBc1.dta") %>% mutate(Dataset = "SBBc1") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
 SBBc2.dta <- read_dta("SBBc2.dta") %>% mutate(Dataset = "SBBc2") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
@@ -303,7 +292,7 @@ SBBc5.dta <- read_dta("SBBc5.dta") %>% mutate(Dataset = "SBBc5") %>% rowwise() %
 SBBc6.dta <- read_dta("SBBc6.dta") %>% mutate(Dataset = "SBBc6") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
 SBBc7.dta <- read_dta("SBBc7.dta") %>% mutate(Dataset = "SBBc7") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
 SBBc8.dta <- read_dta("SBBc8.dta") %>% mutate(Dataset = "SBBc8") %>% rowwise() %>% mutate(P = pvalue(treatment_effect, N_treatment_effect, se_treatment_effect)) %>% tail(n=1)
- 
+
 
 # ============== JOIN INTO DATAFRAMES ================
 
@@ -311,91 +300,91 @@ SBBc8.dta <- read_dta("SBBc8.dta") %>% mutate(Dataset = "SBBc8") %>% rowwise() %
 
 # Binary
 uub.dta = rbind(UUb1.dta, UUb2.dta, UUb3.dta, UUb4.dta, UUb5.dta, UUb6.dta, UUb7.dta, UUb8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # Continuous
 uuc.dta = rbind(UUc1.dta, UUc2.dta, UUc3.dta, UUc4.dta, UUc5.dta, UUc6.dta, UUc7.dta, UUc8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 
 # BU DATASET
 
 # Binary
 bub.dta = rbind(BUb1.dta, BUb2.dta, BUb3.dta, BUb4.dta, BUb5.dta, BUb6.dta, BUb7.dta, BUb8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # Continuous
 buc.dta = rbind(BUc1.dta, BUc2.dta, BUc3.dta, BUc4.dta, BUc5.dta, BUc6.dta, BUc7.dta, BUc8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # BB DATASET
 
 # Binary
 bbb.dta = rbind(BBb1.dta, BBb2.dta, BBb3.dta, BBb4.dta, BBb5.dta, BBb6.dta, BBb7.dta, BBb8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # Continuous
 bbc.dta = rbind(BBc1.dta, BBc2.dta, BBc3.dta, BBc4.dta, BBc5.dta, BBc6.dta, BBc7.dta, BBc8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 
 # SUU DATASET
 
 # Binary
 suub.dta = rbind(SUUb1.dta, SUUb2.dta, SUUb3.dta, SUUb4.dta, SUUb5.dta, SUUb6.dta, SUUb7.dta, SUUb8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # Continuous
 suuc.dta = rbind(SUUc1.dta, SUUc2.dta, SUUc3.dta, SUUc4.dta, SUUc5.dta, SUUc6.dta, SUUc7.dta, SUUc8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # SBU DATASET
 
 # Binary
 sbub.dta = rbind(SBUb1.dta, SBUb2.dta, SBUb3.dta, SBUb4.dta, SBUb5.dta, SBUb6.dta, SBUb7.dta, SBUb8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # Continuous
 sbuc.dta = rbind(SBUc1.dta, SBUc2.dta, SBUc3.dta, SBUc4.dta, SBUc5.dta, SBUc6.dta, SBUc7.dta, SBUc8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # BB DATASET
 
 # Binary
 sbbb.dta = rbind(SBBb1.dta, SBBb2.dta, SBBb3.dta, SBBb4.dta, SBBb5.dta, SBBb6.dta, SBBb7.dta, SBBb8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
 # Continuous
 sbbc.dta = rbind(SBBc1.dta, SBBc2.dta, SBBc3.dta, SBBc4.dta, SBBc5.dta, SBBc6.dta, SBBc7.dta, SBBc8.dta) %>% 
-          relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
-          rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
-          select(-c(time_to_treatment))
+  relocate(treatment_effect_upper_95CI, .after = treatment_effect_lower_95CI) %>%
+  rename(ATT = treatment_effect, se = se_treatment_effect, N = N_treatment_effect, Lower95 = treatment_effect_lower_95CI, Upper95 = treatment_effect_upper_95CI) %>%
+  select(-c(time_to_treatment))
 
-```
+ 
 
-```{r}
+  
 
 #Regression Tables for each dataset and treatment type:
 
@@ -414,7 +403,7 @@ ContinuousRegTable
 xtable(ContinuousRegTable, digits=3)
 
 
-```
+ 
 
 
 
@@ -424,26 +413,26 @@ xtable(ContinuousRegTable, digits=3)
 # ============================================================ 
 # ============================================================ 
 
-```{r}
+  
 uutab1 <- complete_udataset_ufac %>%
-              filter(binarytreat_cs == 1) %>%
-              summarize(CH4perHH = mean(ch4, na.rm=T),
-                        Facilities = mean(facnum,na.rm=T),
-                        AvgHHSize = mean(AvgHHSize,na.rm=T),
-                        MedianIncome = mean(MedianIncome,na.rm=T),
-                        Population = mean(Population,na.rm=T),
-                        RenterFraction = mean(RenterFraction,na.rm=T),
-                        DemShare = mean(demshare,na.rm=T))
+  filter(binarytreat_cs == 1) %>%
+  summarize(CH4perHH = mean(ch4, na.rm=T),
+            Facilities = mean(facnum,na.rm=T),
+            AvgHHSize = mean(AvgHHSize,na.rm=T),
+            MedianIncome = mean(MedianIncome,na.rm=T),
+            Population = mean(Population,na.rm=T),
+            RenterFraction = mean(RenterFraction,na.rm=T),
+            DemShare = mean(demshare,na.rm=T))
 
 uutab2 <- complete_udataset_ufac %>%
-              filter(binarytreat_cs != 1) %>%
-              summarize(CH4perHH = mean(ch4, na.rm=T),
-                        Facilities = mean(facnum,na.rm=T),
-                        AvgHHSize = mean(AvgHHSize,na.rm=T),
-                        MedianIncome = mean(MedianIncome,na.rm=T),
-                        Population = mean(Population,na.rm=T),
-                        RenterFraction = mean(RenterFraction,na.rm=T),
-                        DemShare = mean(demshare,na.rm=T))
+  filter(binarytreat_cs != 1) %>%
+  summarize(CH4perHH = mean(ch4, na.rm=T),
+            Facilities = mean(facnum,na.rm=T),
+            AvgHHSize = mean(AvgHHSize,na.rm=T),
+            MedianIncome = mean(MedianIncome,na.rm=T),
+            Population = mean(Population,na.rm=T),
+            RenterFraction = mean(RenterFraction,na.rm=T),
+            DemShare = mean(demshare,na.rm=T))
 
 balancetableUU <- round(data.frame(cbind(t(uutab1), t(uutab2))) %>% rename(Treated = X1, Untreated = X2),3)
 
@@ -453,7 +442,7 @@ summary(lm(ch4hh ~ cs_treatshare + do_treatshare + facnum + AvgHHSize + RenterFr
 
 show(balancetableUU)
 xtable(BinaryRegTable)
-```
+ 
 
 # ============================================================
 # ============================================================ 
@@ -462,7 +451,7 @@ xtable(BinaryRegTable)
 # ============================================================ 
 
 
-```{r warning=FALSE}
+ {r warning=FALSE}
 
 
 ###############################################
@@ -534,9 +523,9 @@ colnames(e6b) = c("basic", "demographic", "facnum", "demshare", "do")
 TWFEbinOLS <- rbind(e1b, e2b, e3b, e4b, e5b, e6b)
 xtable(TWFEbinOLS)
 
-```
+ 
 
-```{r}
+  
 
 ###############################################
 ###############################################
@@ -608,10 +597,10 @@ colnames(e6c) = c("basic", "demographic", "facnum", "demshare", "do")
 TWFEctsOLS <- rbind(e1c, e2c, e3c, e4c, e5c, e6c)
 xtable(TWFEctsOLS, digits=1)
 
-```
+ 
 
 
-```{r}
+  
 
 
 #####################################################################
@@ -684,7 +673,7 @@ iplot(eventsbbb,
       xlim = c(-5,5))
 
 
-```
+ 
 
 
 

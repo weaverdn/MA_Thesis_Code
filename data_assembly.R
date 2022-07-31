@@ -21,9 +21,7 @@ Mode <- function(x) {
   ux[which.max(tabulate(match(x, ux)))]
 }
 
-
  
-
 # ==============================================================
 # ==============================================================
 # ========= PART I - MSW GHG DATA CLEAN/MERGE/LOCATE ===========
@@ -642,7 +640,9 @@ pre2010_hhdo <- cmp_county %>% group_by(county_fips,do_year) %>%
 # Add list of years county gets treatment:
 treatyears <- cmp_county %>%
   group_by(county_fips) %>%
-  summarise(cs_treatyears = as.character(list(cs_year)),
+  summarise(cs_firsttreat = min(cs_year),
+            do_firsttreat = min(do_year),
+            cs_treatyears = as.character(list(cs_year)),
             do_treatyears = as.character(list(do_year)))
 
 # Add list of households treated in FIP each year:
@@ -783,13 +783,111 @@ complete_bdataset_bfac <- ghg_bfac %>%
          do_treatshare = replace(do_treatshare, is.na(do_treatshare),0)) %>%
   mutate(do_treatshare = ifelse(do_treatshare >= 1, 1, do_treatshare))
 
+# SAFE DATASETS:
+# Drop county if county has a community with unknown treat year:
+scomplete_udataset_ufac = complete_udataset_ufac %>% filter(county_fips %!in% biased_counties)
+scomplete_bdataset_ufac = complete_bdataset_ufac %>% filter(county_fips %!in% biased_counties)
+scomplete_bdataset_bfac = complete_bdataset_bfac %>% filter(county_fips %!in% biased_counties)
+ 
+
+  
+
+###########################################################################
+####### STEP 3 - ADD BINARY TREATMENT AND TIME TO TREAT VARIABLE  #########
+###########################################################################
+
+# Standard Datasets
+complete_udataset_ufac <- complete_udataset_ufac %>%
+  mutate(binarytreat_cs = ifelse(cs_treatshare > 0,1,0),
+         binarytreat_do = ifelse(do_treatshare > 0,1,0)) %>%
+  rowwise() %>%
+  mutate(timetotreat_cs = (as.numeric(year) - as.numeric(cs_firsttreat)),
+         timetotreat_do = (as.numeric(year) - as.numeric(do_firsttreat))) %>%
+  mutate(timetotreat_cs = ifelse(is.nan(timetotreat_cs), NA, timetotreat_cs),
+         timetotreat_do = ifelse(is.nan(timetotreat_do), NA, timetotreat_do))
+
+complete_bdataset_ufac <- complete_bdataset_ufac %>%
+  mutate(binarytreat_cs = ifelse(cs_treatshare > 0,1,0),
+         binarytreat_do = ifelse(do_treatshare > 0,1,0)) %>%
+  rowwise() %>%
+  mutate(timetotreat_cs = (as.numeric(year) - as.numeric(cs_firsttreat)),
+         timetotreat_do = (as.numeric(year) - as.numeric(do_firsttreat))) %>%
+  mutate(timetotreat_cs = ifelse(is.nan(timetotreat_cs), NA, timetotreat_cs),
+         timetotreat_do = ifelse(is.nan(timetotreat_do), NA, timetotreat_do))
+
+complete_bdataset_bfac <- complete_bdataset_bfac %>%
+  mutate(binarytreat_cs = ifelse(cs_treatshare > 0,1,0),
+         binarytreat_do = ifelse(do_treatshare > 0,1,0))%>%
+  rowwise() %>%
+  mutate(timetotreat_cs = (as.numeric(year) - as.numeric(cs_firsttreat)),
+         timetotreat_do = (as.numeric(year) - as.numeric(do_firsttreat))) %>%
+  mutate(timetotreat_cs = ifelse(is.nan(timetotreat_cs), NA, timetotreat_cs),
+         timetotreat_do = ifelse(is.nan(timetotreat_do), NA, timetotreat_do))
+
+# Safe Datasets
+scomplete_udataset_ufac <- scomplete_udataset_ufac %>%
+  mutate(binarytreat_cs = ifelse(cs_treatshare > 0,1,0),
+         binarytreat_do = ifelse(do_treatshare > 0,1,0)) %>%
+  rowwise() %>%
+  mutate(timetotreat_cs = (as.numeric(year) - as.numeric(cs_firsttreat)),
+         timetotreat_do = (as.numeric(year) - as.numeric(do_firsttreat))) %>%
+  mutate(timetotreat_cs = ifelse(is.nan(timetotreat_cs), NA, timetotreat_cs),
+         timetotreat_do = ifelse(is.nan(timetotreat_do), NA, timetotreat_do))
+
+
+scomplete_bdataset_ufac <- scomplete_bdataset_ufac %>%
+  mutate(binarytreat_cs = ifelse(cs_treatshare > 0,1,0),
+         binarytreat_do = ifelse(do_treatshare > 0,1,0)) %>%
+  rowwise() %>%
+  mutate(timetotreat_cs = (as.numeric(year) - as.numeric(cs_firsttreat)),
+         timetotreat_do = (as.numeric(year) - as.numeric(do_firsttreat))) %>%
+  mutate(timetotreat_cs = ifelse(is.nan(timetotreat_cs), NA, timetotreat_cs),
+         timetotreat_do = ifelse(is.nan(timetotreat_do), NA, timetotreat_do))
+
+
+scomplete_bdataset_bfac <- scomplete_bdataset_bfac %>%
+  mutate(binarytreat_cs = ifelse(cs_treatshare > 0,1,0),
+         binarytreat_do = ifelse(do_treatshare > 0,1,0)) %>%
+  rowwise() %>%
+  mutate(timetotreat_cs = (as.numeric(year) - as.numeric(cs_firsttreat)),
+         timetotreat_do = (as.numeric(year) - as.numeric(do_firsttreat))) %>%
+  mutate(timetotreat_cs = ifelse(is.nan(timetotreat_cs), NA, timetotreat_cs),
+         timetotreat_do = ifelse(is.nan(timetotreat_do), NA, timetotreat_do))
+
+
+# ADD PER HOUSEHOLD AND PER POP FOR OUTCOME VARIABLE:
+
+complete_udataset_ufac <- complete_udataset_ufac %>%
+  mutate(ch4hh = ch4/Households,
+         ch4hh = ch4/Population)
+
+complete_bdataset_ufac <- complete_bdataset_ufac %>%
+  mutate(ch4hh = ch4/Households,
+         ch4hh = ch4/Population)
+
+complete_bdataset_bfac <- complete_bdataset_bfac %>%
+  mutate(ch4hh = ch4/Households,
+         ch4hh = ch4/Population)
+
+scomplete_udataset_ufac <- scomplete_udataset_ufac %>%
+  mutate(ch4hh = ch4/Households,
+         ch4hh = ch4/Population)
+
+scomplete_bdataset_ufac <- scomplete_bdataset_ufac %>%
+  mutate(ch4hh = ch4/Households,
+         ch4hh = ch4/Population)
+
+scomplete_bdataset_bfac <- scomplete_bdataset_bfac %>%
+  mutate(ch4hh = ch4/Households,
+         ch4hh = ch4/Population)
+
  
 
 
   
 
 ##################################################
-####### STEP 3 - EXPORT DATASET VARIANTS  ########
+####### STEP 4 - EXPORT DATASET VARIANTS  ########
 ##################################################
 
 # MAIN SPECIFICATIONS:
@@ -803,12 +901,9 @@ write.xlsx(complete_bdataset_bfac, "ghg_cmp_bpanel_bfac.xlsx")
 
 setwd("/Users/DNW/Desktop/ECON 594_595/MA Thesis/Datasets/Final Datasets/Counties without NA Communities")
 # Drop county if county has a community with unknown treat year:
-dataset = complete_udataset_ufac %>% filter(county_fips %!in% biased_counties)
-write.xlsx(dataset, "dghg_cmp_upanel_ufac.xlsx")
-dataset = complete_bdataset_ufac %>% filter(county_fips %!in% biased_counties)
-write.xlsx(dataset, "dghg_cmp_bpanel_ufac.xlsx")
-dataset = complete_bdataset_bfac %>% filter(county_fips %!in% biased_counties)
-write.xlsx(dataset, "dghg_cmp_bpanel_bfac.xlsx")
+write.xlsx(scomplete_udataset_ufac, "sghg_cmp_upanel_ufac.xlsx")
+write.xlsx(scomplete_bdataset_ufac, "sghg_cmp_bpanel_ufac.xlsx")
+write.xlsx(scomplete_bdataset_bfac, "sghg_cmp_bpanel_bfac.xlsx")
 
  
 
